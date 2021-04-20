@@ -36,6 +36,9 @@ A short example will suffice. Putting
 ```
 
 into your RST file will generate two literal blocks, one with the 'input' source code, and one with the captured stdout.
+It looks pretty basic, but it does the job:
+
+![Example sphinx-exec-directive output](https://i.stack.imgur.com/5sVSS.png)
 
 Note that objects **must** be printed to stdout, or they will not be displayed.
 This behaviour therefore differs slightly from the functionality in a Jupyter notebook (where the last line is evaluated and the result displayed automatically), or the interactive Python console.
@@ -63,3 +66,5 @@ Some other text goes here... Let's print x again...
 It will work.
 
 ```
+
+![Example sphinx-exec-directive output using context flag](https://i.stack.imgur.com/FdvRm.png)
