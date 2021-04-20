@@ -4,7 +4,7 @@ Run Python code blocks and display the output directly within Sphinx documentati
 
 This is based very strongly on [matplotlib's `plot_directive` extension](https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html?highlight=plot%20directive#module-matplotlib.sphinxext.plot_directive), but is used for running code instead of generating plots.
 
-**Note:** This allows arbitrary code execution using `exec()`. Don't do silly things with it.
+**Note:** This allows arbitrary code execution using [`exec()`](https://docs.python.org/3/library/functions.html#exec). Don't do silly things with it.
 
 
 ## Installation
