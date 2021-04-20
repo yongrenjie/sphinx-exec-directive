@@ -1,0 +1,5 @@
+*.egg-info/
+**/plot_directive.py
+**/__pycache__
+*.swp
+**/.DS_Store
