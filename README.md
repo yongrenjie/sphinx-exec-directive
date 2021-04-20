@@ -9,6 +9,14 @@ This is based very strongly on [matplotlib's `plot_directive` extension](https:/
 
 ## Installation
 
+Install from PyPI:
+
+```
+pip install sphinx-exec-directive
+```
+
+or manually:
+
 ```
 git clone https://github.com/yongrenjie/sphinx-exec-directive
 cd sphinx-exec-directive
