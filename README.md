@@ -39,6 +39,7 @@ into your RST file will generate two literal blocks, one with the 'input' source
 
 Note that objects **must** be printed to stdout, or they will not be displayed.
 This behaviour therefore differs slightly from the functionality in a Jupyter notebook (where the last line is evaluated and the result displayed automatically), or the interactive Python console.
+If nothing is printed to stdout (or only empty space is) then the output literal block will be omitted.
 
 
 ## The `context` option

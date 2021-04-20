@@ -55,7 +55,11 @@ class Exec(Directive):
         node_out = nodes.literal_block(code_out, code_out)
         node_in['language'] = 'python'
         node_out['language'] = 'none'
-        return [node_in, node_out]
+
+        if code_out.strip() == "":
+            return [node_in]
+        else:
+            return [node_in, node_out]
 
 
 def setup(app):
