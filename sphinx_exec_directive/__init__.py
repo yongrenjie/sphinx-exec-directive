@@ -60,7 +60,7 @@ def _option_process(arg):
 class Exec(Directive):
     has_content = True
     required_arguments = 0
-    optional_arguments = 3
+    optional_arguments = 1
     option_spec = {
         'context': _option_boolean,
         'cache': _option_boolean,
@@ -68,6 +68,7 @@ class Exec(Directive):
     }
 
     def run(self):
+        # Parse options
         save_context = self.options.get('context', False)
         # Don't cache if the user requests saving context, or if the context is
         # nonempty. The reason is because the global_dict can't be updated just
@@ -79,43 +80,66 @@ class Exec(Directive):
                  and self.options.get('cache', True))
         process = self.options.get('process', 'python')
 
-        code_in = "\n".join(self.content)
+        # Determine whether input is to be read from a file, or directly from
+        # the exec block's contents.
+        from_file = len(self.arguments) > 0
 
+        # Get some important paths.
+        # NOTE ABOUT PATHS:
+        # Any variable ending in _pAD is an absolute path to a directory.
+        #                        _pRD is a  relative path to a directory.
+        #                        _pAF is an absolute path to a file.
+        #                        _pRF is a  relative path to a file.
+        top_level_sphinx_pAD = Path(setup.confdir)
+
+        # Determine where to get source code from.
+        if from_file:
+            # Set the 'source file' to be the specified file. The argument to
+            # the exec block is given as a relative path, so has to be made
+            # absolute with respect to the top-level Sphinx directory.
+            source_pAF = top_level_sphinx_pAD.joinpath(Path(self.arguments[0]))
+            code_in = source_pAF.read_text()
+        else:
+            # Set the 'source file' to be the rst file which the code is in.
+            # This path is already absolute.
+            source_pAF = Path(self.state_machine.document.attributes['source'])
+            code_in = "\n".join(self.content)
+
+        # Look up the output in the cache, or execute the code.
         if cache:
-            # Get some important paths
-            top_level_sphinx_dir = Path(setup.confdir)
-            # ^ ~/dphil/nbsphinx
-            source_f = Path(self.state_machine.document.attributes['source'])
-            # ^ ~/dphil/nbsphinx/hmbc/yymmdd.rst
+            source_pRF = source_pAF.relative_to(top_level_sphinx_pAD)
+
             # Figure out where to dump the output.
-            source_rel_f = source_f.relative_to(top_level_sphinx_dir)
-            # ^ hmbc/yymmdd.rst
-            source_identifier = str(source_rel_f)[:-4].replace('/', '-')
-            # ^ hmbc-yymmdd
-            build_dir = Path(setup.app.doctreedir).parent
-            # ^ ~/dphil/nbsphinx/dirhtml (or whatever)
-            md5_hash = md5(code_in.encode('utf-8')).hexdigest()
-            # ^ HASH
-            output_f = (build_dir
-                         / "exec_directive"
-                         / f"{source_identifier}-{process}-{md5_hash}")
-            # ^ ~/dphil/nbsphinx/dirhtml/exec_directive/
-            #     hmbc-yymmdd-python-HASH
+            if from_file:
+                source_identifier = source_pRF.with_suffix('')
+                source_identifier = str(source_identifier).replace('/', '-')
+                identifier = f"{source_identifier}-{process}-file.out"
+                # ^ folder-yymmdd-filename-python-file.out
+            else:
+                source_identifier = source_pRF.with_suffix('')
+                source_identifier = str(source_identifier).replace('/', '-')
+                md5_hash = md5(code_in.encode('utf-8')).hexdigest()
+                identifier = (f"{source_identifier}-{process}-"
+                              f"inline-{md5_hash}.out")
+                # ^ folder-yymmdd-python-inline-<HASH>.out
+            build_pAD = Path(setup.app.doctreedir).parent
+            output_pAF = build_pAD / "exec_directive" / identifier
 
-            cache_found = (output_f.exists()
-                           and
-                           source_f.stat().st_mtime < output_f.stat().st_mtime)
-
+            # Look for the cached output. If not found, execute it.
+            cache_found = (
+                output_pAF.exists()
+                and source_pAF.stat().st_mtime < output_pAF.stat().st_mtime
+            )
             if cache_found:
-                with open(output_f, "r") as out_f:
+                with open(output_pAF, "r") as out_f:
                     code_out = out_f.read()
             else:
                 code_out = execute_code(code_in, process, context)
-                if not output_f.parent.exists():
-                    output_f.parent.mkdir()
-                with open(output_f, "w") as out_f:
+                if not output_pAF.parent.exists():
+                    output_pAF.parent.mkdir()
+                with open(output_pAF, "w") as out_f:
                     print(code_out, file=out_f, end="")
-        else:  # cache not enabled
+        else:  # caching was disabled, execute it
             code_out = execute_code(code_in, process, context)
 
         # Reset the context if it's not meant to be preserved
