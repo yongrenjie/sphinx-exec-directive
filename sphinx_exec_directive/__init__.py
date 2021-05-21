@@ -1,5 +1,6 @@
 import os
 import io
+import subprocess
 from hashlib import md5
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -11,14 +12,25 @@ from docutils.parsers.rst import directives, Directive
 context = dict()
 
 
-def execute_code(code, globals_dict=None):
-    if globals_dict is None:
-        globals_dict = {}
+def execute_code(code, process, globals_dict=None):
+    if process == 'python':
+        if globals_dict is None:
+            globals_dict = {}
 
-    output_object = io.StringIO()
-    with redirect_stdout(output_object):
-        exec(code, globals_dict)
-    code_out = output_object.getvalue()
+        output_object = io.StringIO()
+        with redirect_stdout(output_object):
+            exec(code, globals_dict)
+        code_out = output_object.getvalue()
+
+    elif process == 'haskell':
+        proc = subprocess.Popen(['runghc'],
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE)
+        out, err = proc.communicate(input=code.encode('utf-8'))
+        # Log any stderr.
+        if err is not None and err.strip() != "":
+            print(err)
+        code_out = out.decode('utf-8')
 
     return code_out
 
@@ -36,13 +48,23 @@ def _option_boolean(arg):
         raise ValueError('"%s" unknown boolean' % arg)
 
 
+def _option_process(arg):
+    if arg is None:
+        return 'python'
+    elif arg.lower() in ['python', 'haskell']:
+        return arg.lower()
+    else:
+        raise ValueError(f"':process: {arg}' not recognised")
+
+
 class Exec(Directive):
     has_content = True
     required_arguments = 0
-    optional_arguments = 2
+    optional_arguments = 3
     option_spec = {
         'context': _option_boolean,
         'cache': _option_boolean,
+        'process': _option_process,
     }
 
     def run(self):
@@ -55,6 +77,7 @@ class Exec(Directive):
         cache = (not save_context
                  and len(context) == 0
                  and self.options.get('cache', True))
+        process = self.options.get('process', 'python')
 
         code_in = "\n".join(self.content)
 
@@ -75,8 +98,9 @@ class Exec(Directive):
             # ^ HASH
             output_f = (build_dir
                          / "exec_directive"
-                         / f"{source_identifier}-{md5_hash}")
-            # ^ ~/dphil/nbsphinx/dirhtml/exec_directive/hmbc-yymmdd-HASH
+                         / f"{source_identifier}-{process}-{md5_hash}")
+            # ^ ~/dphil/nbsphinx/dirhtml/exec_directive/
+            #     hmbc-yymmdd-python-HASH
 
             cache_found = (output_f.exists()
                            and
@@ -86,13 +110,13 @@ class Exec(Directive):
                 with open(output_f, "r") as out_f:
                     code_out = out_f.read()
             else:
-                code_out = execute_code(code_in, context)
+                code_out = execute_code(code_in, process, context)
                 if not output_f.parent.exists():
                     output_f.parent.mkdir()
                 with open(output_f, "w") as out_f:
                     print(code_out, file=out_f, end="")
         else:  # cache not enabled
-            code_out = execute_code(code_in, context)
+            code_out = execute_code(code_in, process, context)
 
         # Reset the context if it's not meant to be preserved
         if not save_context:
@@ -100,7 +124,7 @@ class Exec(Directive):
 
         node_in = nodes.literal_block(code_in, code_in)
         node_out = nodes.literal_block(code_out, code_out)
-        node_in['language'] = 'python'
+        node_in['language'] = process
         node_out['language'] = 'none'
 
         if code_out.strip() == "":
@@ -115,7 +139,7 @@ def setup(app):
     app.add_directive("exec", Exec)
 
     return {
-        'version': '0.3',
+        'version': '0.4',
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }
