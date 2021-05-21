@@ -163,7 +163,7 @@ def setup(app):
     app.add_directive("exec", Exec)
 
     return {
-        'version': '0.4',
+        'version': '0.5',
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }

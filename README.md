@@ -52,10 +52,38 @@ Note that objects **must** be printed to stdout, or they will not be displayed.
 This behaviour therefore differs slightly from the functionality in a Jupyter notebook (where the last line is evaluated and the result displayed automatically), or the interactive Python console.
 If nothing is printed to stdout (or only empty space is) then the output literal block will be omitted.
 
+## From a file
+
+Instead of inserting the code literally into the RST sources, you can also put it in a separate file.
+The file path **must** be given relative to the top-level Sphinx directory (i.e. the directory which `conf.py` is in):
+
+```
+.. exec:: subfolder/my_script.py
+```
+
+The same conditions apply; anything you want to display must be printed to stdout.
+
+## Other processes
+
+Currently simple Haskell code can be run: to do this, use `:process: haskell` as follows.
+You will need to have `runghc` installed and available in your `PATH`.
+
+```
+.. exec::
+   :process: haskell
+
+   main :: IO ()
+   main = print $ take 10 fibs
+     where
+       fibs = 0 : scanl (+) 1 fibs
+```
+
+I plan to generalise this (see [#7](https://github.com/yongrenjie/sphinx-exec-directive/issues/7)).
+
 ## Caching
 
-Outputs are cached by default, UNLESS context preservation has been requested in any part of the same document (see #4 for rationale).
-To turn this off on a per-codeblock basis (e.g. if the code depends on the time which it is run at), use the `:cache: false` option.
+Outputs are cached by default, **unless** context preservation has been requested in any part of the same document (see [#4](https://github.com/yongrenjie/sphinx-exec-directive/issues/4) for rationale).
+To turn this off on a per-codeblock basis (e.g. if the code depends on the time which it is run at), specify a falsy value for the `:cache` option.
 
 ```
 .. exec::
@@ -65,10 +93,10 @@ To turn this off on a per-codeblock basis (e.g. if the code depends on the time 
    print(datetime.now())
 ```
 
-## The `context` option
+## Preserving context between `exec` blocks
 
-Use this to preserve objects between different `exec` directives.
-Setting this to `true` (or `True` or `1` or `yes`) will keep any objects in the current exec directive "alive" for the next one.
+Setting the `:context:` option to a truthy value will keep any objects in the current exec directive "alive" for the next one.
+Note that this only works for Python blocks, and is incompatible with caching (see above).
 
 ```
 .. exec::
