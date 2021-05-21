@@ -47,10 +47,14 @@ class Exec(Directive):
 
     def run(self):
         save_context = self.options.get('context', False)
-        # Don't cache if the user requests saving context. The reason is
-        # because the global_dict can't be updated just by reading in code from
-        # a file (as opposed to executing it). I can't be bothered to fix this.
-        cache = not save_context and self.options.get('cache', True)
+        # Don't cache if the user requests saving context, or if the context is
+        # nonempty. The reason is because the global_dict can't be updated just
+        # by reading in code from a file (as opposed to executing it). I can't
+        # be bothered to fix this (and truthfully I don't see an easy way,
+        # short of serialising the entire contents of `context`).
+        cache = (not save_context
+                 and len(context) == 0
+                 and self.options.get('cache', True))
 
         code_in = "\n".join(self.content)
 
@@ -111,7 +115,7 @@ def setup(app):
     app.add_directive("exec", Exec)
 
     return {
-        'version': '0.2',
+        'version': '0.3',
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }
