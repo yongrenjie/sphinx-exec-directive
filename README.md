@@ -65,8 +65,13 @@ The same conditions apply; anything you want to display must be printed to stdou
 
 ## Other processes
 
-Currently simple Haskell code can be run: to do this, use `:process: haskell` as follows.
-You will need to have `runghc` installed and available in your `PATH`.
+A few other processes are available, for running code in different languages.
+These all use the `:process: PROCESS` option, where `PROCESS` is one of the following:
+
+- **:process: haskell**: `runghc` must be present in `PATH`.
+- **:process: matlab**: `matlab` must be present in `PATH`.
+
+Here's an example:
 
 ```
 .. exec::

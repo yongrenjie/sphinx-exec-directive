@@ -4,12 +4,29 @@ import subprocess
 from hashlib import md5
 from contextlib import redirect_stdout
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from docutils import nodes
 from docutils.parsers.rst import directives, Directive
 
 
 context = dict()
+
+
+class cd:
+    """
+    Context manager for changing the current working directory. Taken from
+    https://stackoverflow.com/a/13197763/7115316.
+    """
+    def __init__(self, newPath):
+        self.newPath = os.path.expanduser(newPath)
+
+    def __enter__(self):
+        self.savedPath = os.getcwd()
+        os.chdir(self.newPath)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.savedPath)
 
 
 def execute_code(code, process, globals_dict=None):
@@ -25,12 +42,33 @@ def execute_code(code, process, globals_dict=None):
     elif process == 'haskell':
         proc = subprocess.Popen(['runghc'],
                                 stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE)
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
         out, err = proc.communicate(input=code.encode('utf-8'))
         # Log any stderr.
         if err is not None and err.strip() != "":
             print(err)
         code_out = out.decode('utf-8')
+
+    elif process == 'matlab':
+        # MATLAB can't pipe, so we need to dump to a tempfile.
+        with NamedTemporaryFile(suffix=".m") as tempfile:
+            tempfile.write(code.encode('utf-8'))
+            tempfile.flush()   # mandatory, or else it will be empty
+            filepath = Path(tempfile.name)
+            # Then execute MATLAB.
+            with cd(filepath.parent):
+                comp_proc = subprocess.run(['matlab', '-batch', filepath.stem],
+                                           capture_output=True, text=True)
+                out = comp_proc.stdout
+                err = comp_proc.stderr
+        # Log any stderr.
+        if err is not None and err.strip() != "":
+            print(err)
+        code_out = out
+
+    else:
+        raise ValueError(f"process type '{process}' not recognised.")
 
     return code_out
 
@@ -51,10 +89,8 @@ def _option_boolean(arg):
 def _option_process(arg):
     if arg is None:
         return 'python'
-    elif arg.lower() in ['python', 'haskell']:
-        return arg.lower()
     else:
-        raise ValueError(f"':process: {arg}' not recognised")
+        return arg.lower()
 
 
 class Exec(Directive):
