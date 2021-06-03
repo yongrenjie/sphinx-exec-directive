@@ -11,6 +11,7 @@ from docutils.parsers.rst import directives, Directive
 
 
 context = dict()
+previous_rst = None
 
 
 class cd:
@@ -104,6 +105,13 @@ class Exec(Directive):
     }
 
     def run(self):
+        # Get the source file and if it has changed, then reset the context.
+        current_rst = Path(self.state_machine.document.attributes['source'])
+        global previous_rst
+        if previous_rst is None or previous_rst != current_rst:
+            previous_rst = current_rst
+            context.clear()
+
         # Parse options
         save_context = self.options.get('context', False)
         # Don't cache if the user requests saving context, or if the context is
@@ -138,7 +146,7 @@ class Exec(Directive):
         else:
             # Set the 'source file' to be the rst file which the code is in.
             # This path is already absolute.
-            source_pAF = Path(self.state_machine.document.attributes['source'])
+            source_pAF = current_rst
             code_in = "\n".join(self.content)
 
         # Look up the output in the cache, or execute the code.
