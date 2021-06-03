@@ -78,22 +78,15 @@ The same conditions apply; anything you want to display must be printed to stdou
 ## Other languages
 
 A few other processes are available, for running code in different languages.
-These all use the `:process: PROCESS` option, where `PROCESS` is one of the following:
+These all use the `:process: PROCESS` option, where `PROCESS` is one of the following.
+For these to work, you will need to have certain executables present in your `PATH`.
 
-- **:process: haskell**: `runghc` must be present in `PATH`.
-- **:process: matlab**: `matlab` must be present in `PATH`.
+| `PROCESS` | Requirements | Description |
+| --------- | ------------ | ----------- |
+| `haskell` | `runghc` executable | Pipes the code into `runghc` and captures stdout.
+| `matlab`  | `matlab` executable | Creates a tempfile and runs non-interactive Matlab on it. |
 
-Here's an example:
-
-```
-.. exec::
-   :process: haskell
-
-   main :: IO ()
-   main = print $ take 10 fibs
-     where
-       fibs = 0 : scanl (+) 1 fibs
-```
+An example of executing Haskell code can be found [here](https://github.com/yongrenjie/sphinx-exec-directive/issues/7#issuecomment-846228337).
 
 I plan to generalise this (see [#7](https://github.com/yongrenjie/sphinx-exec-directive/issues/7)) in the future.
 
