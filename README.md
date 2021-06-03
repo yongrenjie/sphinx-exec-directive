@@ -1,10 +1,22 @@
 # sphinx-exec-directive
 
-Run Python code blocks and display the output directly within Sphinx documentation.
+`sphinx-exec-directive` allows you to write code blocks in reStructuredText files, execute them during Sphinx compilation, and display the output directly within the generated documentation.
+
+The 'default' code language is Python, but there is limited support for other languages right now, namely Haskell and Matlab.
+Note that for other languages, you will need to have the corresponding executables on `$PATH`. See: [Other Languages](#other-languages).
 
 This is based very strongly on [matplotlib's `plot_directive` extension](https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html?highlight=plot%20directive#module-matplotlib.sphinxext.plot_directive), but is used for running code instead of generating plots.
 
-**Note:** This allows arbitrary code execution using [`exec()`](https://docs.python.org/3/library/functions.html#exec). Don't do silly things with it.
+**Note:** This allows arbitrary code execution. Don't do silly things with it.
+
+## Contents
+
+ - [Installation](#installation)
+ - [Basic usage: Python code blocks](#basic-usage-python-code-blocks)
+ - [Reading code from a file](#reading-code-from-a-file)
+ - [Other languages](#other-languages)
+ - [Caching](#caching)
+ - [Preserving context](#preserving-context)
 
 
 ## Installation
@@ -33,7 +45,7 @@ extensions = [
 ```
 
 
-## Example usage
+## Basic usage: Python code blocks
 
 A short example will suffice. Putting
 
@@ -52,7 +64,7 @@ Note that objects **must** be printed to stdout, or they will not be displayed.
 This behaviour therefore differs slightly from the functionality in a Jupyter notebook (where the last line is evaluated and the result displayed automatically), or the interactive Python console.
 If nothing is printed to stdout (or only empty space is) then the output literal block will be omitted.
 
-## From a file
+## Reading code from a file
 
 Instead of inserting the code literally into the RST sources, you can also put it in a separate file.
 The file path **must** be given relative to the top-level Sphinx directory (i.e. the directory which `conf.py` is in):
@@ -63,7 +75,7 @@ The file path **must** be given relative to the top-level Sphinx directory (i.e.
 
 The same conditions apply; anything you want to display must be printed to stdout.
 
-## Other processes
+## Other languages
 
 A few other processes are available, for running code in different languages.
 These all use the `:process: PROCESS` option, where `PROCESS` is one of the following:
@@ -83,7 +95,7 @@ Here's an example:
        fibs = 0 : scanl (+) 1 fibs
 ```
 
-I plan to generalise this (see [#7](https://github.com/yongrenjie/sphinx-exec-directive/issues/7)).
+I plan to generalise this (see [#7](https://github.com/yongrenjie/sphinx-exec-directive/issues/7)) in the future.
 
 ## Caching
 
@@ -98,7 +110,7 @@ To turn this off on a per-codeblock basis (e.g. if the code depends on the time 
    print(datetime.now())
 ```
 
-## Preserving context between `exec` blocks
+## Preserving context
 
 Setting the `:context:` option to a truthy value will keep any objects in the current exec directive "alive" for the next one.
 Note that this only works for Python blocks, and is incompatible with caching (see above).
