@@ -31,6 +31,18 @@ class cd:
 
 
 def execute_code(code, process, globals_dict=None):
+
+    def execute_code_with_pipe(command):
+        proc = subprocess.Popen(command,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        out, err = proc.communicate(input=code.encode("utf-8"))
+        # Log any stderr.
+        if err is not None and err.strip() != "":
+            print(err)
+        return out.decode('utf-8')
+
     if process == 'python':
         if globals_dict is None:
             globals_dict = {}
@@ -41,15 +53,7 @@ def execute_code(code, process, globals_dict=None):
         code_out = output_object.getvalue()
 
     elif process == 'haskell':
-        proc = subprocess.Popen(['runghc'],
-                                stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        out, err = proc.communicate(input=code.encode('utf-8'))
-        # Log any stderr.
-        if err is not None and err.strip() != "":
-            print(err)
-        code_out = out.decode('utf-8')
+        code_out = execute_code_with_pipe(['runghc'])
 
     elif process == 'matlab':
         # MATLAB can't pipe, so we need to dump to a tempfile.
@@ -67,6 +71,9 @@ def execute_code(code, process, globals_dict=None):
         if err is not None and err.strip() != "":
             print(err)
         code_out = out
+
+    elif process == 'shell':
+        code_out = execute_code_with_pipe(['sh'])
 
     else:
         raise ValueError(f"process type '{process}' not recognised.")

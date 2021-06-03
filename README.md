@@ -2,8 +2,9 @@
 
 `sphinx-exec-directive` allows you to write code blocks in reStructuredText files, execute them during Sphinx compilation, and display the output directly within the generated documentation.
 
-The 'default' code language is Python, but there is limited support for other languages right now, namely Haskell and Matlab.
-Note that for other languages, you will need to have the corresponding executables on `$PATH`. See: [Other Languages](#other-languages).
+The 'default' code language is Python, but there is some limited support for other languages right now.
+Note that for other languages, you will need to have the corresponding executables on `$PATH`.
+See: [Other Languages](#other-languages).
 
 This is based very strongly on [matplotlib's `plot_directive` extension](https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html?highlight=plot%20directive#module-matplotlib.sphinxext.plot_directive), but is used for running code instead of generating plots.
 
@@ -85,6 +86,7 @@ For these to work, you will need to have certain executables present in your `PA
 | --------- | ------------ | ----------- |
 | `haskell` | `runghc` executable | Pipes the code into `runghc` and captures stdout.
 | `matlab`  | `matlab` executable | Creates a tempfile and runs non-interactive Matlab on it. |
+| `shell`   |                     | Pipes the code into `sh`. Note that the initial working directory will be your home directory. |
 
 An example of executing Haskell code can be found [here](https://github.com/yongrenjie/sphinx-exec-directive/issues/7#issuecomment-846228337).
 
