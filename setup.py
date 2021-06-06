@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='sphinx-exec-directive',
-    version='0.5',
+    version='0.6',
     description='Run Python code blocks and display the output directly within Sphinx documentation',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -14,7 +14,7 @@ setup(
     author_email='yongrenjie@gmail.com',
     license='MIT',
     packages=['sphinx_exec_directive'],
-    python_requires='>=3.4',
+    python_requires='>=3.7',
     install_requires=["docutils"],
     classifiers=[
         "Programming Language :: Python :: 3",
