@@ -127,4 +127,18 @@ It will work.
 
 ```
 
-![Example sphinx-exec-directive output using context flag](https://i.stack.imgur.com/FdvRm.png)
+## Adding a paragraph between Python and output blocks
+
+Setting the `:intertext:` option to a text inserts the text in between the Python and output blocks.
+The text may use a basic reStructuredText syntax.
+
+```
+.. exec::
+   :intertext: prints the value of the variable ``x``:
+
+   x = 5
+   print(x)
+```
+
+<!-- generate image for this -->
+![Example sphinx-exec-directive output using intertext option](https://i.stack.imgur.com/FdvRm.png)
