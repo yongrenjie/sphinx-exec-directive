@@ -7,8 +7,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from docutils import nodes
-from docutils.parsers.rst import directives, Directive
-
+from docutils.parsers.rst import directives, Directive, Parser
+from docutils.utils import new_document
 
 context = dict()
 previous_rst = None
@@ -94,6 +94,10 @@ def _option_boolean(arg):
         raise ValueError('"%s" unknown boolean' % arg)
 
 
+def _option_str(arg):
+    return str(arg)
+
+
 def _option_process(arg):
     if arg is None:
         return 'python'
@@ -109,6 +113,7 @@ class Exec(Directive):
         'context': _option_boolean,
         'cache': _option_boolean,
         'process': _option_process,
+        'intertext': _option_str,
     }
 
     def run(self):
@@ -205,7 +210,13 @@ class Exec(Directive):
         if code_out.strip() == "":
             return [node_in]
         else:
-            return [node_in, node_out]
+            intertext = self.options.get('intertext', None)
+            if intertext:
+                internodes = new_document('intertext', self.state.document.settings)
+                Parser().parse(intertext, internodes)
+                return [node_in, *internodes.document.children, node_out]
+            else:
+                return [node_in, node_out]
 
 
 def setup(app):
