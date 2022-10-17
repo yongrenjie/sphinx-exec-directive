@@ -6,10 +6,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from docutils import nodes, frontend
-from docutils.parsers.rst import directives, Directive
+from docutils import nodes
+from docutils.parsers.rst import directives, Directive, Parser
 from docutils.utils import new_document
-from docutils.parsers.rst import Parser
 
 context = dict()
 previous_rst = None
@@ -211,10 +210,9 @@ class Exec(Directive):
         if code_out.strip() == "":
             return [node_in]
         else:
-            intertext = self.options.get('intertext',None)
+            intertext = self.options.get('intertext', None)
             if intertext:
-                settings = frontend.get_default_settings(Parser)
-                internodes = new_document('intertext', settings)
+                internodes = new_document('intertext', self.state.document.settings)
                 Parser().parse(intertext, internodes)
                 return [node_in, *internodes.document.children, node_out]
             else:
