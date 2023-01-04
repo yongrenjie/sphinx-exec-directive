@@ -53,7 +53,7 @@ def execute_code(code, process, globals_dict=None):
         code_out = output_object.getvalue()
 
     elif process == 'haskell':
-        code_out = execute_code_with_pipe(['runghc'])
+        code_out = execute_code_with_pipe(['ghci'])
 
     elif process == 'matlab':
         # MATLAB can't pipe, so we need to dump to a tempfile.
