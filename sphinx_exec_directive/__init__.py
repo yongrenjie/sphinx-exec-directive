@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import subprocess
 from hashlib import md5
 from contextlib import redirect_stdout
@@ -30,18 +31,26 @@ class cd:
         os.chdir(self.savedPath)
 
 
-def execute_code(code, process, globals_dict=None):
+def execute_code(code, process, interpreted=False, globals_dict=None):
 
-    def execute_code_with_pipe(command):
+    def execute_code_with_pipe(command, post_process=[]):
         proc = subprocess.Popen(command,
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         out, err = proc.communicate(input=code.encode("utf-8"))
+
+        # apply all post processing functions now that we have output
+        out = out.decode('utf-8')
+
+        for f in post_process:
+            out = f(out)
+
         # Log any stderr.
         if err is not None and err.strip() != "":
             print(err)
-        return out.decode('utf-8')
+
+        return out
 
     if process == 'python':
         if globals_dict is None:
@@ -53,7 +62,18 @@ def execute_code(code, process, globals_dict=None):
         code_out = output_object.getvalue()
 
     elif process == 'haskell':
-        code_out = execute_code_with_pipe(['ghci'])
+        external_process = 'runghc'
+        # the identity function
+        post_process = [lambda x: x]
+
+        if interpreted:
+            external_process = 'ghci'
+            post_process += [lambda s: s.replace("ghci>",""),
+                             lambda s: re.sub("^.*?\n", "", s),
+                             lambda s: s.replace("Leaving GHCi.\n", "").rstrip()
+                            ]
+
+        code_out = execute_code_with_pipe([external_process], post_process)
 
     elif process == 'matlab':
         # MATLAB can't pipe, so we need to dump to a tempfile.
@@ -97,7 +117,6 @@ def _option_boolean(arg):
 def _option_str(arg):
     return str(arg)
 
-
 def _option_process(arg):
     if arg is None:
         return 'python'
@@ -114,6 +133,7 @@ class Exec(Directive):
         'cache': _option_boolean,
         'process': _option_process,
         'intertext': _option_str,
+        'interpreted':_option_boolean,
     }
 
     def run(self):
@@ -135,6 +155,8 @@ class Exec(Directive):
                  and len(context) == 0
                  and self.options.get('cache', True))
         process = self.options.get('process', 'python')
+
+        interpreted = self.options.get('interpreted', False)
 
         # Determine whether input is to be read from a file, or directly from
         # the exec block's contents.
@@ -190,13 +212,13 @@ class Exec(Directive):
                 with open(output_pAF, "r") as out_f:
                     code_out = out_f.read()
             else:
-                code_out = execute_code(code_in, process, context)
+                code_out = execute_code(code_in, process, interpreted, context)
                 if not output_pAF.parent.exists():
                     output_pAF.parent.mkdir()
                 with open(output_pAF, "w") as out_f:
                     print(code_out, file=out_f, end="")
         else:  # caching was disabled, execute it
-            code_out = execute_code(code_in, process, context)
+            code_out = execute_code(code_in, process, interpreted, context)
 
         # Reset the context if it's not meant to be preserved
         if not save_context:
