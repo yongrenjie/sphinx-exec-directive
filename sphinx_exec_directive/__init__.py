@@ -31,7 +31,7 @@ class cd:
         os.chdir(self.savedPath)
 
 
-def execute_code(code, process, interpreted=False, globals_dict=None):
+def execute_code(runner, globals_dict=None):
 
     def execute_code_with_pipe(command, post_process=[]):
         proc = subprocess.Popen(command,
@@ -52,7 +52,7 @@ def execute_code(code, process, interpreted=False, globals_dict=None):
 
         return out
 
-    if process == 'python':
+    if runner['process'] == 'python':
         if globals_dict is None:
             globals_dict = {}
 
@@ -61,21 +61,19 @@ def execute_code(code, process, interpreted=False, globals_dict=None):
             exec(code, globals_dict)
         code_out = output_object.getvalue()
 
-    elif process == 'haskell':
-        external_process = 'runghc'
-        # the identity function
-        post_process = [lambda x: x]
+    elif runner['process'] == 'haskell':
+        post_process = []
+        payload = []
 
-        if interpreted:
-            external_process = 'ghci'
+        if  runner['with'] == 'ghci':
             post_process += [lambda s: s.replace("ghci>",""),
                              lambda s: re.sub("^.*?\n", "", s),
                              lambda s: s.replace("Leaving GHCi.\n", "").rstrip()
                             ]
 
-        code_out = execute_code_with_pipe([external_process], post_process)
+        code_out = execute_code_with_pipe()
 
-    elif process == 'matlab':
+    elif runner['process'] == 'matlab':
         # MATLAB can't pipe, so we need to dump to a tempfile.
         with NamedTemporaryFile(suffix=".m") as tempfile:
             tempfile.write(code.encode('utf-8'))
@@ -129,11 +127,13 @@ class Exec(Directive):
     required_arguments = 0
     optional_arguments = 1
     option_spec = {
-        'context': _option_boolean,
-        'cache': _option_boolean,
-        'process': _option_process,
+        'context':   _option_boolean,
+        'cache':     _option_boolean,
+        'process':   _option_process,
         'intertext': _option_str,
-        'interpreted':_option_boolean,
+        'with':      _option_str,
+        'target':    _option_str,
+        'args':      _option_str
     }
 
     def run(self):
@@ -156,7 +156,19 @@ class Exec(Directive):
                  and self.options.get('cache', True))
         process = self.options.get('process', 'python')
 
-        interpreted = self.options.get('interpreted', False)
+        opt_with = self.options.get('with', '')
+        target   = self.options.get('target','')
+        args     = self.options.get ('args','')
+
+        # A runner is "that which runs the code", i.e., a dictionary that
+        # defines the entire external process
+        runner = {'process': process,  # the language
+                  'with':    opt_with, # to run with what tool/binary
+                  'target':  target,   # which target to run in the case we are
+                                       # not running a literate code block
+                  'code_in': '',       # The code to run in case we are running
+                                       # a literate code block
+                  'args':    args}     # extra args passed to with
 
         # Determine whether input is to be read from a file, or directly from
         # the exec block's contents.
@@ -212,13 +224,13 @@ class Exec(Directive):
                 with open(output_pAF, "r") as out_f:
                     code_out = out_f.read()
             else:
-                code_out = execute_code(code_in, process, interpreted, context)
+                code_out = execute_code(code_in, process, context)
                 if not output_pAF.parent.exists():
                     output_pAF.parent.mkdir()
                 with open(output_pAF, "w") as out_f:
                     print(code_out, file=out_f, end="")
         else:  # caching was disabled, execute it
-            code_out = execute_code(code_in, process, interpreted, context)
+            code_out = execute_code(code_in, process, context)
 
         # Reset the context if it's not meant to be preserved
         if not save_context:
