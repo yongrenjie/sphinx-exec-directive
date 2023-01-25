@@ -1,6 +1,8 @@
 import os
+import platform
 import sys
 import shutil
+import warnings
 from subprocess import PIPE, Popen
 from pathlib import Path
 
@@ -35,6 +37,13 @@ def test_sphinx_build(tmp_path):
 
     # open HTML if requested
     if os.environ.get("SPHINX_EXEC_DIRECTIVE_OPENHTML", "") == "1":
-        Popen(["open", f"{str(build_dir)}/index.html"])
+        s = platform.system()
+        if s == "Darwin":
+            Popen(["open", f"{str(build_dir)}/index.html"])
+        elif s == "Linux":
+            Popen(["xdg-open", f"{str(build_dir)}/index.html"])
+        else:
+            warnings.warn("unsupported operating system for opening html")
+
 
     assert build_dir.is_dir()
