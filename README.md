@@ -84,11 +84,11 @@ For these to work, you will need to have certain executables present in your `PA
 
 | `PROCESS` | Requirements | Description |
 | --------- | ------------ | ----------- |
-| `haskell` | `runghc` executable | Pipes the code into `runghc` and captures stdout.
+| `haskell` | `runghc` or `ghci` or `cabal` or `stack` executables | Pipes the code into `runghc` or `ghci`, or calls a `cabal` or `stack` target and captures stdout. 
 | `matlab`  | `matlab` executable | Creates a tempfile and runs non-interactive Matlab on it. |
 | `shell`   |                     | Pipes the code into `sh`. Note that the initial working directory will be your home directory. |
 
-An example of executing Haskell code can be found [here](https://github.com/yongrenjie/sphinx-exec-directive/issues/7#issuecomment-846228337).
+Haskell code can be run with different `runner`s. See the [Haskell Optimization Handbook](https://github.com/input-output-hk/hs-opt-handbook.github.io) for numerous examples.
 
 I plan to generalise this (see [#7](https://github.com/yongrenjie/sphinx-exec-directive/issues/7)) in the future.
 
