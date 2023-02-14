@@ -88,9 +88,116 @@ For these to work, you will need to have certain executables present in your `PA
 | `matlab`  | `matlab` executable | Creates a tempfile and runs non-interactive Matlab on it. |
 | `shell`   |                     | Pipes the code into `sh`. Note that the initial working directory will be your home directory. |
 
-Haskell code can be run with different `runner`s. See the [Haskell Optimization Handbook](https://github.com/input-output-hk/hs-opt-handbook.github.io) for numerous examples.
-
 I plan to generalise this (see [#7](https://github.com/yongrenjie/sphinx-exec-directive/issues/7)) in the future.
+
+## Basic usage: Haskell code blocks
+
+Haskell code can be run with `runghc`, `ghci`, or can run a `cabal` or `stack`
+target and show its output:
+
+### Run with runghc
+
+Using `runghc` requires that the code block defines a module complete with a
+`main` function:
+
+```
+.. exec::
+   :context: false
+   :process: haskell
+
+   module Main where
+
+   main :: IO ()
+   main = do
+     let x = fmap (+10) [1..10]
+     print x
+```
+
+and this produces:
+
+![Example sphinx-exec-directive output haskell-runghc](https://imgur.com/a/Fcc8vEg)
+
+where the code block is shown and its output immediately follows. See
+[Preserving context](#preserving-context) for information on the context flag.
+
+### Run with ghci
+
+Using `ghci` requires that `ghci` is on your `$PATH`. You should use this runner
+when you want to show some type signatures or run code that is not affiliated
+with a project. See the [Run with Cabal](#run-with-cabal) section for running
+project targets or ghci loaded with your project:
+
+```
+.. exec::
+   :context: true
+   :process: haskell
+   :with: ghci
+
+   :t "Hello"
+```
+
+Notice the new `with` flag. This changes the default runner from `runghc` to
+`ghci`. This invocation produces:
+
+![Example sphinx-exec-directive output haskell-ghci](https://imgur.com/uAPvQYA)
+
+an expected. We can also load any packages in the global environment into the
+ghci instance:
+
+```
+.. exec::
+   :context: true
+   :process: haskell
+   :with: ghci
+
+   :m + Data.List
+   :t span
+```
+
+Which produces: 
+
+![Example sphinx-exec-directive output haskell-ghci-pkg](https://imgur.com/2ARnMpa)
+
+### Run with Cabal or Stack
+
+If you have a `cabal` or `stack` project that your documentation builds upon
+then you can run any `cabal` or `stack` target and capture its output through
+the `exec` directive. This is particularly useful for showing benchmarks in
+text. For example the [Haskell Optimization
+Handbook](https://github.com/input-output-hk/hs-opt-handbook.github.io) has a
+cabal project whose programs are used to elucidate points made in the handbook.
+So it runs benchmarks in the handbook to show off the effects of different
+optimizations. The directive invocation becomes:
+
+```
+.. exec:: code/lethargy/bench/TooManyClosures.hs
+   :context: true
+   :process: haskell
+   :project_dir: code/lethargy/
+   :with: cabal
+   :args: bench lethargy:tooManyClosures
+```
+
+ Notice the invocation takes a source file after `exec::` and that there are
+ several new flags: `project_dir`, `with`, and `args`. `project_dir` is a
+ _relative_ filepath that is relative to the root directory of the sphinx
+ project (where your `conf.py` is located). `with` sets the runner to use
+ `cabal` in this example, if you're using `stack` then `with` should be set to
+ `stack`. `args` are all the arguments that you want to pass to either `cabal`
+ or `stack`. The runner code is deliberately simple, it does not try to figure
+ things out for you or hunt for your `.cabal` or `.stack` files. It simply
+ aggregates the needed information, performs some safety checks, and runs either
+ `cabal` or `stack` with the `args` field. This produces:
+
+![Example sphinx-exec-directive output haskell-cabal](https://imgur.com/BMB9gDc)
+
+Where the file is shown in its entirety, followed by the output of the `cabal`
+or `stack` target. If you do not need to show the entire file then remove the
+filepath after the `exec::` call. Notice that the output from the target only
+shows the output _produced_ by the target, that is, it elides all output from
+building the project and its dependencies. This is purposefully filtered and is
+not exposed to the end-user (that's you) to disable. If you need this then
+please open an issue!
 
 ## Caching
 
