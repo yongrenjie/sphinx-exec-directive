@@ -22,7 +22,7 @@ For more information, follow the links for the respective languages below.
      - ``matlab``
      - Creates a tempfile and runs non-interactive Matlab on it
 
-   * - ``shell``
+   * - :doc:`shell <shell>`
      - ``sh``
      - Pipes the code into ``sh``; note that the initial working directory will be your home directory
 
@@ -35,3 +35,4 @@ For more information, follow the links for the respective languages below.
    :hidden:
 
    haskell
+   shell
