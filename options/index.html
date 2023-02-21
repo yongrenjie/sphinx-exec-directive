@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Options &#8212; sphinx-exec-directive  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex/" />
+    <link rel="search" title="Search" href="../search/" />
+    <link rel="next" title="Other languages" href="../language/" />
+    <link rel="prev" title="Basic usage: Python" href="../basic/" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="options">
+<h1>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h1>
+<p>This page explains some of the available options.
+There aren’t many at this point in time; if you’d like a feature please <a class="reference external" href="https://github.com/yongrenjie/sphinx-exec-directive/issues">open an issue</a>.</p>
+<div class="section" id="caching">
+<h2>Caching<a class="headerlink" href="#caching" title="Permalink to this headline">¶</a></h2>
+<p>By default, outputs are cached, <em>unless</em> context preservation has been requested in any part of the same document.
+To turn this off on a per-codeblock basis (e.g. if the code depends on the time which it is run at), specify a falsy value for the <code class="docutils literal notranslate"><span class="pre">:cache:</span></code> option.
+For example, what you’ll see in the stdout block here is the last time the documentation was built.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">rst</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">exec</span><span class="p">::</span>
+   <span class="nc">:cache:</span> false
+
+   from datetime import datetime
+   print(datetime.now())
+</pre></div>
+</div>
+</div>
+<p><hr /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>2023-02-21 02:16:16.940128
+</pre></div>
+</div>
+</div>
+<div class="section" id="context-preservation">
+<h2>Context preservation<a class="headerlink" href="#context-preservation" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">:context:</span></code> option can be used to preserve variables between Python code blocks in the same file.
+This has no effect on other languages, and is incompatible with caching.</p>
+<p>For example, you can define a variable in the first code block:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">rst</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">exec</span><span class="p">::</span>
+   <span class="nc">:context:</span> true
+
+   x = 5
+   print(f&#39;x is equal to {x}&#39;)
+</pre></div>
+</div>
+</div>
+<p><hr /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;x is equal to </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>x is equal to 5
+</pre></div>
+</div>
+<p>You can later print the value of <code class="docutils literal notranslate"><span class="pre">x</span></code> again:</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">rst</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">exec</span><span class="p">::</span>
+
+   print(x)
+</pre></div>
+</div>
+</div>
+<p><hr /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>5
+</pre></div>
+</div>
+<p>Note that these variables are cleared upon encountering any code block where the <code class="docutils literal notranslate"><span class="pre">context</span></code> option is not explicitly enabled.
+So, if we were to try to print <code class="docutils literal notranslate"><span class="pre">x</span></code> again at this point, it would fail.</p>
+</div>
+<div class="section" id="interspersed-text">
+<h2>Interspersed text<a class="headerlink" href="#interspersed-text" title="Permalink to this headline">¶</a></h2>
+<p>The <cite>:intertext:</cite> option may be used to insert text between the code and stdout blocks.
+Basic RST syntax can be used.</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">rst</span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span>This code
+
+<span class="p">..</span> <span class="ow">exec</span><span class="p">::</span>
+   <span class="nc">:intertext:</span> prints the value of the variable <span class="s">``x``</span>:
+
+   x = 5
+   print(x)
+</pre></div>
+</div>
+</div>
+<p><hr /></p>
+<p>This code</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>prints the value of the variable <code class="docutils literal notranslate"><span class="pre">x</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>5
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../">sphinx-exec-directive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic/">Basic usage: Python</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#caching">Caching</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#context-preservation">Context preservation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interspersed-text">Interspersed text</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../language/">Other languages</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../">Documentation overview</a><ul>
+      <li>Previous: <a href="../basic/" title="previous chapter">Basic usage: Python</a></li>
+      <li>Next: <a href="../language/" title="next chapter">Other languages</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search/" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022–2023, Jonathan Yong.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/options.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
