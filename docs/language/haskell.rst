@@ -51,7 +51,6 @@ Notice the new ``with`` flag here: this changes the default runner from ``runghc
    :caption: rst
 
    .. exec::
-      :context: true
       :process: haskell
       :with: ghci
 
@@ -60,7 +59,6 @@ Notice the new ``with`` flag here: this changes the default runner from ``runghc
 |hr|
 
 .. exec::
-   :context: true
    :process: haskell
    :with: ghci
  
@@ -72,7 +70,6 @@ You can also load any packages in the global environment into the ``ghci`` insta
    :caption: rst
 
    .. exec::
-      :context: true
       :process: haskell
       :with: ghci
    
@@ -82,7 +79,6 @@ You can also load any packages in the global environment into the ``ghci`` insta
 |hr|
 
 .. exec::
-  :context: true
   :process: haskell
   :with: ghci
 
@@ -105,7 +101,6 @@ The directive invocation becomes:
    :caption: rst
 
    .. exec:: code/lethargy/bench/TooManyClosures.hs
-      :context: true
       :process: haskell
       :project_dir: code/lethargy/
       :with: cabal
