@@ -6,3 +6,5 @@
 build/
 dist/
 .tox
+tests/rst_source/dirhtml
+docs/_build
