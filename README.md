@@ -2,7 +2,8 @@
 
 `sphinx-exec-directive` allows you to write code blocks in reStructuredText files, execute them during Sphinx compilation, and display the output directly within the generated documentation.
 
-The 'default' code language is Python, but there is some limited support for other languages right now (see the documentation for more info).
+The 'default' code language is Python, but there is some limited support for other languages right now (see the [extension documentation](https://yongrenjie.github.io/sphinx-exec-directive) for more info).
+If you want a particular language to be added, please feel free to raise an issue!
 
 This is based very strongly on [matplotlib's `plot_directive` extension](https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html?highlight=plot%20directive#module-matplotlib.sphinxext.plot_directive), but is used for running code instead of generating plots.
 
