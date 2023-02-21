@@ -71,6 +71,8 @@ def execute_code(runner, globals_dict=None):
             runner['with'] = 'runghc' # default is runghc, no hooks
 
         if runner['with'] == 'ghci':
+            # TODO: properly add in an args argument to execute_code_with_pipe
+            runner['with'] = 'ghci -ignore-dot-ghci'.split()
             # if running with ghci then we post process the output to remove
             # ghci specific text
             post_process += [lambda s: s.replace("ghci>",""),
