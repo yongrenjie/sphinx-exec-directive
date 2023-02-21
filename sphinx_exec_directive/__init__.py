@@ -11,6 +11,8 @@ from docutils import nodes
 from docutils.parsers.rst import directives, Directive, Parser
 from docutils.utils import new_document
 
+from .parse_options import *
+
 context = dict()
 previous_rst = None
 
@@ -31,26 +33,27 @@ class cd:
         os.chdir(self.savedPath)
 
 
-def execute_code(runner, globals_dict=None):
+def execute_code_with_pipe(command, code_in, post_process=None):
+    proc = subprocess.Popen(command,
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate(input=code_in.encode("utf-8"))
 
-    def execute_code_with_pipe(command, code_in, post_process=[]):
-        proc = subprocess.Popen(command,
-                                stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        out, err = proc.communicate(input=code_in.encode("utf-8"))
-
-        # apply all post processing functions now that we have output
-        out = out.decode('utf-8')
-
+    # apply all post processing functions now that we have output
+    out = out.decode('utf-8')
+    if post_process is not None:
         for f in post_process:
             out = f(out)
 
-        # Log any stderr.
-        if err is not None and len(err.strip()) > 0:
-            print(err)
+    # Log any stderr.
+    if err is not None and err.strip() == b'':
+        print(err)
 
-        return out
+    return out
+
+
+def execute_code(runner, globals_dict=None):
 
     if runner['process'] == 'python':
         if globals_dict is None:
@@ -111,51 +114,28 @@ def execute_code(runner, globals_dict=None):
 
     elif runner['process'] == 'matlab':
         # MATLAB can't pipe, so we need to dump to a tempfile.
-        with NamedTemporaryFile(suffix=".m") as tempfile:
-            tempfile.write(code.encode('utf-8'))
+        with NamedTemporaryFile(suffix='.m') as tempfile:
+            tempfile.write(runner['code_in'].encode('utf-8'))
             tempfile.flush()   # mandatory, or else it will be empty
             filepath = Path(tempfile.name)
             # Then execute MATLAB.
             with cd(filepath.parent):
                 comp_proc = subprocess.run(['matlab', '-batch', filepath.stem],
                                            capture_output=True, text=True)
-                out = comp_proc.stdout.decode('utf-8')
+                out = comp_proc.stdout
                 err = comp_proc.stderr
         # Log any stderr.
         if err is not None and len(err.strip()) > 0:
             print(err)
         code_out = out
 
-    elif process == 'shell':
-        code_out = execute_code_with_pipe(['sh'])
+    elif runner['process'] == 'shell':
+        code_out = execute_code_with_pipe(['sh'], runner['code_in'])
 
     else:
-        raise ValueError(f"process type '{process}' not recognised.")
+        raise ValueError(f"process type '{runner['process']}' not recognised.")
 
     return code_out
-
-
-def _option_boolean(arg):
-    """Copied from matplotlib plot_directive."""
-    if not arg or not arg.strip():
-        # no argument given, assume used as a flag
-        return True
-    elif arg.strip().lower() in ('no', '0', 'false'):
-        return False
-    elif arg.strip().lower() in ('yes', '1', 'true'):
-        return True
-    else:
-        raise ValueError('"%s" unknown boolean' % arg)
-
-
-def _option_str(arg):
-    return str(arg)
-
-def _option_process(arg):
-    if arg is None:
-        return 'python'
-    else:
-        return arg.lower()
 
 
 class Exec(Directive):
@@ -163,13 +143,13 @@ class Exec(Directive):
     required_arguments = 0
     optional_arguments = 1
     option_spec = {
-        'context':   _option_boolean,
-        'cache':     _option_boolean,
-        'process':   _option_process,
-        'intertext': _option_str,
-        'project_dir': _option_str,
-        'with':      _option_str,
-        'args':      _option_str
+        'context':     option_boolean,
+        'cache':       option_boolean,
+        'process':     option_process,
+        'intertext':   option_str,
+        'project_dir': option_str,
+        'with':        option_str,
+        'args':        option_str
     }
 
     def run(self):
