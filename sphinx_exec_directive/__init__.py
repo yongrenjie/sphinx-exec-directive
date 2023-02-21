@@ -47,7 +47,7 @@ def execute_code(runner, globals_dict=None):
             out = f(out)
 
         # Log any stderr.
-        if err is not None and err.strip() != "":
+        if err is not None and len(err.strip()) > 0:
             print(err)
 
         return out
@@ -98,7 +98,7 @@ def execute_code(runner, globals_dict=None):
                                   # cannot run a binary without linking! Log
 
                 # Log
-                if err is not None and err.strip() != "":
+                if err is not None and len(err.strip()) > 0:
                     print(err) # should use sphinx logger
 
             else:
@@ -120,7 +120,7 @@ def execute_code(runner, globals_dict=None):
                 out = comp_proc.stdout.decode('utf-8')
                 err = comp_proc.stderr
         # Log any stderr.
-        if err is not None and err.strip() != "":
+        if err is not None and len(err.strip()) > 0:
             print(err)
         code_out = out
 
