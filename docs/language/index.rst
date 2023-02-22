@@ -2,7 +2,7 @@ Other languages
 ===============
 
 Some support for other languages is present (I plan to extend this in the future).
-The language to be used is specified with the ``:process: PROCESS`` option, where ``PROCESS`` is one of the following.
+The language to be used is specified with the ``:language: LANGUAGE`` option, where ``LANGUAGE`` is one of the following.
 Generally, to run code blocks of other languages, you will need to have the relevant executable(s) installed and locatable in ``$PATH``.
 
 For more information, follow the links for the respective languages below.
@@ -10,7 +10,7 @@ For more information, follow the links for the respective languages below.
 .. list-table::
    :header-rows: 1
 
-   * - ``PROCESS``
+   * - ``LANGUAGE``
      - Required executables
      - Description
 

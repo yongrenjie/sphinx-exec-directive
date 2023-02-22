@@ -8,6 +8,8 @@ Note that, for other languages, you will generally need to have the relevant exe
 
 This is based very strongly on `matplotlib's plot_directive extension <https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html?highlight=plot%20directive#module-matplotlib.sphinxext.plot_directive>`_, but is used for running code instead of generating plots.
 
+You are currently viewing the documentation for version |version| of ``sphinx-exec-directive``.
+
 Contents
 --------
 

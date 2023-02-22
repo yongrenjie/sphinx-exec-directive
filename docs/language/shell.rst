@@ -13,7 +13,7 @@ This is because the subprocess which runs the code inherits environment variable
    :caption: rst
 
    .. exec::
-      :process: shell
+      :language: shell
       
       echo "Hello, world; from sh."
       which ls
@@ -23,7 +23,7 @@ This is because the subprocess which runs the code inherits environment variable
 |hr|
 
 .. exec::
-   :process: shell
+   :language: shell
   
    echo "Hello, world; from sh."
    which ls

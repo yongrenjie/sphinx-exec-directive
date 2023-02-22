@@ -3,9 +3,13 @@ from setuptools import setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# Version number
+exec(open('sphinx_exec_directive/version.py').read())
+version = __version__
+
 setup(
     name='sphinx-exec-directive',
-    version='0.6',
+    version=__version__,
     description='Run Python code blocks and display the output directly within Sphinx documentation',
     long_description=long_description,
     long_description_content_type="text/markdown",

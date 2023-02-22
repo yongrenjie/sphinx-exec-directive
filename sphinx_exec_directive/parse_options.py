@@ -14,7 +14,7 @@ def option_str(arg):
     return str(arg)
 
 
-def option_process(arg):
+def option_language(arg):
     if arg is None:
         return 'python'
     else:

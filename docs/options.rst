@@ -62,22 +62,24 @@ You can later print the value of ``x`` again:
 
    .. exec::
 
-      print(x)
+      print(f'x is *still* equal to {x}')
 
 |hr|
 
 .. exec::
 
-      print(x)
+   print(f'x is *still* equal to {x}')
 
 Note that these variables are cleared upon encountering any code block where the ``context`` option is not explicitly enabled.
-So, if we were to try to print ``x`` again at this point, it would fail.
+So, if we were to try to print ``x`` again at this point, it would fail, because the block immediately above this did not use the ``context`` option.
+
+If this option is enabled, context for Python code blocks will always be carried through code blocks of other languages.
 
 
 Interspersed text
 -----------------
 
-The `:intertext:` option may be used to insert text between the code and stdout blocks.
+The ``:intertext:`` option may be used to insert text between the code and stdout blocks.
 Basic RST syntax can be used.
 
 .. code-block:: rst

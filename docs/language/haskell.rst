@@ -14,7 +14,7 @@ Using ``runghc`` requires that the code block defines a module complete with a
    :caption: rst
 
    .. exec::
-      :process: haskell
+      :language: haskell
 
       module Main where
 
@@ -26,7 +26,7 @@ Using ``runghc`` requires that the code block defines a module complete with a
 |hr|
 
 .. exec::
-   :process: haskell
+   :language: haskell
 
    module Main where
 
@@ -51,7 +51,7 @@ Notice the new ``with`` flag here: this changes the default runner from ``runghc
    :caption: rst
 
    .. exec::
-      :process: haskell
+      :language: haskell
       :with: ghci
 
       :t "Hello"
@@ -59,7 +59,7 @@ Notice the new ``with`` flag here: this changes the default runner from ``runghc
 |hr|
 
 .. exec::
-   :process: haskell
+   :language: haskell
    :with: ghci
  
    :t "Hello"
@@ -70,7 +70,7 @@ You can also load any packages in the global environment into the ``ghci`` insta
    :caption: rst
 
    .. exec::
-      :process: haskell
+      :language: haskell
       :with: ghci
    
       :m + Data.List
@@ -79,7 +79,7 @@ You can also load any packages in the global environment into the ``ghci`` insta
 |hr|
 
 .. exec::
-  :process: haskell
+  :language: haskell
   :with: ghci
 
   :m + Data.List
@@ -101,7 +101,7 @@ The directive invocation becomes:
    :caption: rst
 
    .. exec:: code/lethargy/bench/TooManyClosures.hs
-      :process: haskell
+      :language: haskell
       :project_dir: code/lethargy/
       :with: cabal
       :args: bench lethargy:tooManyClosures

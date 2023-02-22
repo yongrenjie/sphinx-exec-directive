@@ -1,141 +1,20 @@
 import os
-import io
-import re
-import subprocess
 from hashlib import md5
-from contextlib import redirect_stdout
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from typing import Optional
 
 from docutils import nodes
-from docutils.parsers.rst import directives, Directive, Parser
+from docutils.parsers.rst import Directive, Parser
 from docutils.utils import new_document
 
 from .parse_options import *
-
-context = dict()
-previous_rst = None
-
-
-class cd:
-    """
-    Context manager for changing the current working directory. Taken from
-    https://stackoverflow.com/a/13197763/7115316.
-    """
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
-
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
-
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
+from .run import Runner
+from .version import __version__
 
 
-def execute_code_with_pipe(command, code_in, post_process=None):
-    proc = subprocess.Popen(command,
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    out, err = proc.communicate(input=code_in.encode("utf-8"))
-
-    # apply all post processing functions now that we have output
-    out = out.decode('utf-8')
-    if post_process is not None:
-        for f in post_process:
-            out = f(out)
-
-    # Log any stderr.
-    if err is not None and err.strip() == b'':
-        print(err)
-
-    return out
-
-
-def execute_code(runner, globals_dict=None):
-
-    if runner['process'] == 'python':
-        if globals_dict is None:
-            globals_dict = {}
-
-        output_object = io.StringIO()
-        with redirect_stdout(output_object):
-            exec(runner['code_in'], globals_dict)
-        code_out = output_object.getvalue()
-
-    elif runner['process'] == 'haskell':
-        post_process = []
-        payload = []
-
-        # check that the runner with field is set
-        # and set post-process hooks
-        if not runner['with']:
-            runner['with'] = 'runghc' # default is runghc, no hooks
-
-        if runner['with'] == 'ghci':
-            # TODO: properly add in an args argument to execute_code_with_pipe
-            runner['with'] = 'ghci -ignore-dot-ghci'.split()
-            # if running with ghci then we post process the output to remove
-            # ghci specific text
-            post_process += [lambda s: s.replace("ghci>",""),
-                             lambda s: re.sub("^.*?\n", "", s),
-                             lambda s: s.replace("Leaving GHCi.\n", "").rstrip()
-                            ]
-
-        # do the business
-        if runner['with'] == 'cabal' or runner['with'] == 'stack':
-            if runner['project_dir']:
-                with cd(Path(runner['project_dir'])):
-                    payload   = [runner['with']] + runner['args']
-                    comp_proc = subprocess.run(payload, capture_output=True, text=True)
-                    out       = comp_proc.stdout
-                    err       = comp_proc.stderr
-                    code_out  = out
-
-                    out_stream = code_out.splitlines()
-                    for index, line in enumerate(out_stream):
-                        if "Linking" in line:
-                            i = index + 1
-                            code_out = '\n'.join(out_stream[i:])
-                            break # only want first hit, and we are guarenteed
-                                  # that linking is in the list because you
-                                  # cannot run a binary without linking! Log
-
-                # Log
-                if err is not None and len(err.strip()) > 0:
-                    print(err) # should use sphinx logger
-
-            else:
-                raise ValueError("Project_dir must be set to run with Cabal or Stack backends")
-
-        else:
-            code_out = execute_code_with_pipe(runner['with'], runner['code_in'], post_process)
-
-    elif runner['process'] == 'matlab':
-        # MATLAB can't pipe, so we need to dump to a tempfile.
-        with NamedTemporaryFile(suffix='.m') as tempfile:
-            tempfile.write(runner['code_in'].encode('utf-8'))
-            tempfile.flush()   # mandatory, or else it will be empty
-            filepath = Path(tempfile.name)
-            # Then execute MATLAB.
-            with cd(filepath.parent):
-                comp_proc = subprocess.run(['matlab', '-batch', filepath.stem],
-                                           capture_output=True, text=True)
-                out = comp_proc.stdout
-                err = comp_proc.stderr
-        # Log any stderr.
-        if err is not None and len(err.strip()) > 0:
-            print(err)
-        code_out = out
-
-    elif runner['process'] == 'shell':
-        code_out = execute_code_with_pipe(['sh'], runner['code_in'])
-
-    else:
-        raise ValueError(f"process type '{runner['process']}' not recognised.")
-
-    return code_out
+class _global:
+    context = dict()
+    previous_rst : Optional[Path] = None
 
 
 class Exec(Directive):
@@ -145,7 +24,7 @@ class Exec(Directive):
     option_spec = {
         'context':     option_boolean,
         'cache':       option_boolean,
-        'process':     option_process,
+        'language':    option_language,
         'intertext':   option_str,
         'project_dir': option_str,
         'with':        option_str,
@@ -155,116 +34,113 @@ class Exec(Directive):
     def run(self):
         # Get the source file and if it has changed, then reset the context.
         current_rst = Path(self.state_machine.document.attributes['source'])
-        global previous_rst
-        if previous_rst is None or previous_rst != current_rst:
-            previous_rst = current_rst
-            context.clear()
+        if _global.previous_rst is None or _global.previous_rst != current_rst:
+            _global.previous_rst = current_rst
+            _global.context.clear()
 
         # Parse options
         save_context = self.options.get('context', False)
-        # Don't cache if the user requests saving context, or if the context is
-        # nonempty. The reason is because the global_dict can't be updated just
-        # by reading in code from a file (as opposed to executing it). I can't
-        # be bothered to fix this (and truthfully I don't see an easy way,
-        # short of serialising the entire contents of `context`).
-        cache = (not save_context
-                 and len(context) == 0
-                 and self.options.get('cache', True))
-        process = self.options.get('process', 'python')
+        language = self.options.get('language', 'python')
         project_dir = self.options.get('project_dir', '')
         opt_with = self.options.get('with', '')
-        args     = self.options.get ('args','').split()
+        args = self.options.get ('args','').split()
+        intertext = self.options.get('intertext', None)
 
-        # A runner is "that which runs the code", i.e., a dictionary that
-        # defines the entire external process
-        runner = {'process': process,  # the language
-                  'with':    opt_with, # to run with what tool/binary
-                  'project_dir': project_dir,   # if we're running from project
-                                                # then store the project dir
-                                                # 'code_in': '', # The code to
-                                                # run, if from file then this is
-                                                # the contents of source_file,
-                                                # if not then its the contents
-                                                # of a literal code block
-                  'args':    args}     # args to run with, with
-
-        # Determine whether input is to be read from a file, or directly from
-        # the exec block's contents.
+        use_cache = (not save_context
+                     and len(_global.context) == 0
+                     and self.options.get('cache', True))
         from_file = len(self.arguments) > 0
 
-        # Get some important paths.
-        # NOTE ABOUT PATHS:
+        # Get some important paths. NOTE ABOUT PATHS:
         # Any variable ending in _pAD is an absolute path to a directory.
         #                        _pRD is a  relative path to a directory.
         #                        _pAF is an absolute path to a file.
         #                        _pRF is a  relative path to a file.
         top_level_sphinx_pAD = Path(setup.confdir)
-
-        # Determine where to get source code from. If we are using a build
-        # system then the user file is actually a project directory
+        # Determine where to get source code from.
         if from_file:
-            # Set the 'source file' to be the specified file. The argument to
-            # the exec block is given as a relative path, so has to be made
-            # absolute with respect to the top-level Sphinx directory.
+            # File was specified; read in its contents.
             source_pAF = top_level_sphinx_pAD.joinpath(Path(self.arguments[0]))
-            runner['code_in'] = source_pAF.read_text()
-            runner['source_file'] = source_pAF
+            code_in = source_pAF.read_text()
         else:
             # Set the 'source file' to be the rst file which the code is in.
             # This path is already absolute.
             source_pAF = current_rst
-            runner['code_in'] = "\n".join(self.content)
+            code_in = "\n".join(self.content)
+        # If we are using a build system then the user file is actually a
+        # project directory.
 
-        # Look up the output in the cache, or execute the code.
-        if cache:
+        # If caching was enabled, search for the cached result first.
+        if use_cache:
             source_pRF = source_pAF.relative_to(top_level_sphinx_pAD)
 
-            # Figure out where to dump the output.
+            # Determine the file to store the cached output in (or read from)
             if from_file:
                 source_identifier = source_pRF.with_suffix('')
                 source_identifier = str(source_identifier).replace('/', '-')
-                identifier = f"{source_identifier}-{process}-file.out"
-                # ^ folder-yymmdd-filename-python-file.out
+                identifier = f"{source_identifier}-{language}-file.out"
+                # e.g. ^ folder-yymmdd-filename-python-file.out
             else:
                 source_identifier = source_pRF.with_suffix('')
                 source_identifier = str(source_identifier).replace('/', '-')
-                md5_hash = md5(runner['code_in'].encode('utf-8')).hexdigest()
-                identifier = (f"{source_identifier}-{process}-"
+                md5_hash = md5(code_in.encode('utf-8')).hexdigest()
+                identifier = (f"{source_identifier}-{language}-"
                               f"inline-{md5_hash}.out")
-                # ^ folder-yymmdd-python-inline-<HASH>.out
+                # e.g. ^ folder-yymmdd-python-inline-<HASH>.out
             build_pAD = Path(setup.app.doctreedir).parent
             output_pAF = build_pAD / "exec_directive" / identifier
 
-            # Look for the cached output. If not found, execute it.
-            cache_found = (
-                output_pAF.exists()
-                and source_pAF.stat().st_mtime < output_pAF.stat().st_mtime
-            )
+            cache_found = (output_pAF.exists()
+                           and (source_pAF.stat().st_mtime
+                                < output_pAF.stat().st_mtime))
             if cache_found:
+                # If the cached output was found and was modified more recently
+                # than the source file, just read the output directly.
                 with open(output_pAF, "r") as out_f:
                     code_out = out_f.read()
             else:
-                code_out = execute_code(runner, context)
+                # Caching requested but not found. Run the code again and cache
+                # it. The context must be empty because otherwise caching would
+                # have been disabled.
+                runner = Runner(code_in=code_in,
+                                language=language,
+                                executable=opt_with,
+                                args=args,
+                                project_dir=project_dir,
+                                context=None)
+                runner.execute_code()
+                code_out = runner.code_out
                 if not output_pAF.parent.exists():
                     output_pAF.parent.mkdir()
                 with open(output_pAF, "w") as out_f:
                     print(code_out, file=out_f, end="")
-        else:  # caching was disabled, execute it
-            code_out = execute_code(runner, context)
+        else:
+            # Caching was disabled, just run the code
+            runner = Runner(code_in=code_in,
+                            language=language,
+                            executable=opt_with,
+                            args=args,
+                            project_dir=project_dir,
+                            context=_global.context)
+            runner.execute_code()
+            code_out = runner.code_out
 
-        # Reset the context if it's not meant to be preserved
-        if not save_context:
-            context.clear()
+            # Update or reset the context if necessary
+            if language == 'python':
+                if save_context:
+                    _global.context = runner.context
+                else:
+                    _global.context.clear()
 
-        node_in = nodes.literal_block(runner['code_in'], runner['code_in'])
+        # Generate Sphinx output
+        node_in = nodes.literal_block(code_in, code_in)
         node_out = nodes.literal_block(code_out, code_out)
-        node_in['language'] = process
+        node_in['language'] = language
         node_out['language'] = 'none'
 
         if code_out.strip() == "":
             return [node_in]
         else:
-            intertext = self.options.get('intertext', None)
             if intertext:
                 internodes = new_document('intertext', self.state.document.settings)
                 Parser().parse(intertext, internodes)
@@ -279,7 +155,7 @@ def setup(app):
     app.add_directive("exec", Exec)
 
     return {
-        'version': '0.5',
+        'version': __version__,
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }

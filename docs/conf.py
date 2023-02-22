@@ -14,3 +14,7 @@ rst_prolog = """
 
    <hr />
 """
+
+# Version number
+exec(open('../sphinx_exec_directive/version.py').read())
+version = __version__
