@@ -18,7 +18,7 @@ For more information, follow the links for the respective languages below.
      - ``runghc``, ``ghci``, ``cabal``, or ``stack``
      - Pipes the code into ``runghc`` or ``ghci``, or calls a ``cabal`` or ``stack`` target and captures stdout
 
-   * - ``matlab``
+   * - :doc:`matlab <matlab>`
      - ``matlab``
      - Creates a tempfile and runs non-interactive Matlab on it
 
@@ -35,4 +35,5 @@ For more information, follow the links for the respective languages below.
    :hidden:
 
    haskell
+   matlab
    shell
