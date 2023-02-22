@@ -88,11 +88,44 @@ You can also load any packages in the global environment into the ``ghci`` insta
 
 .. _haskell-cabal:
 
-Running with Cabal or Stack
----------------------------
+Running Cabal or Stack projects
+-------------------------------
 
 If you have a ``cabal`` or ``stack`` project that your documentation builds upon, then you can run any ``cabal`` or ``stack`` target and capture its output.
-This is particularly useful for showing benchmarks in text.
+As a simple example, here's a project that was generated just using ``cabal init``.
+
+.. code-block:: rst
+   :caption: rst
+
+   .. exec:: examples/hellocabal/app/Main.hs
+      :language: haskell
+      :with: cabal
+      :args: run hellocabal
+      :project_dir: examples/hellocabal
+
+|hr|
+
+.. exec:: examples/hellocabal/app/Main.hs
+   :language: haskell
+   :with: cabal
+   :args: run hellocabal
+   :project_dir: examples/hellocabal
+
+In this case, ``cabal`` is simply run with the given command-line arguments (``:args:``), in the *project directory* specified using the ``:project_dir:`` option.
+The project directory must be specified relative to the top-level Sphinx directory, and is mandatory.
+The arguments can be empty, but that won't be very useful because you'll be running a bare command ``cabal``.
+The ``with`` option sets the runner to use ``cabal`` in this example; if you're using ``stack`` then you can analogously use ``with: stack``.
+
+The source file does not need to be specified; it isn't actually executed, and is only used to show the source code being run.
+You may find that this is not really necessary, in which case the filename can simply be left out (the output of running the ``cabal``/``stack`` command will still remain).
+
+The runner code is deliberately simple; it does not try to figure things out for you or hunt for your ``.cabal`` or ``.stack`` files.
+It simply aggregates the needed information, performs some safety checks, and runs either ``cabal`` or ``stack`` with the ``args`` field.
+Notice that the output from the target only shows the output *produced* by the target, that is, it elides all output from building the project and its dependencies.
+This is purposely filtered and is not exposed to the end-user (that's you) to disable.
+If you need this, please `open an issue <https://github.com/yongrenjie/sphinx-exec-directive/issues>`_.
+
+One thing this is particularly useful for is showing benchmarks in text.
 For example, the `Haskell Optimization Handbook <https://github.com/input-output-hk/hs-opt-handbook.github.io>`_ has a ``cabal`` project whose programs are used to elucidate points made in the handbook.
 So, it runs benchmarks in the handbook to show off the effects of different optimisations.
 The directive invocation becomes:
@@ -102,23 +135,8 @@ The directive invocation becomes:
 
    .. exec:: code/lethargy/bench/TooManyClosures.hs
       :language: haskell
-      :project_dir: code/lethargy/
       :with: cabal
       :args: bench lethargy:tooManyClosures
+      :project_dir: code/lethargy/
 
-(The output is shown `here <https://imgur.com/BMB9gDc>`_.)
-
-Notice the invocation takes a source file after ``exec::``, and that there are several new flags: ``project_dir``, ``with``, and ``args``.
-``project_dir`` is a *relative* filepath that is relative to the root directory of the Sphinx
-project (where your ``conf.py`` is located).
-The ``with`` option sets the runner to use ``cabal`` in this example; if you're using ``stack`` then you can analogously use ``with: stack ``.
-Finally, ``args`` are just all the command-line arguments that you want to pass to either ``cabal`` or ``stack``.
-
-The runner code is deliberately simple; it does not try to figure things out for you or hunt for your ``.cabal`` or ``.stack`` files.
-It simply aggregates the needed information, performs some safety checks, and runs either ``cabal`` or ``stack`` with the ``args`` field.
-
-The source file is shown in its entirety, followed by the output of the ``cabal`` or ``stack`` target.
-If you do not need to show the entire file, then remove the filepath after the ``exec::`` call.
-Notice that the output from the target only shows the output *produced* by the target, that is, it elides all output from building the project and its dependencies.
-This is purposely filtered and is not exposed to the end-user (that's you) to disable.
-If you need this then please `open an issue <https://github.com/yongrenjie/sphinx-exec-directive/issues>`_!
+The output is shown `here <https://imgur.com/BMB9gDc>`_.

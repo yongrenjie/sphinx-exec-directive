@@ -97,14 +97,17 @@ class Runner:
                     out = comp_proc.stdout
                     err = comp_proc.stderr
 
-                    out_stream = self.code_out.splitlines()
+                    out_stream = out.splitlines()
                     for index, line in enumerate(out_stream):
-                        if "Linking" in line:
+                        # Markers for the last line of build output. Anything
+                        # following this is the actual output produced by the
+                        # programme.
+                        if "Linking" in line or line == "Up to date":
                             i = index + 1
                             self.code_out = '\n'.join(out_stream[i:])
-                            break # only want first hit, and we are guarenteed
-                                  # that linking is in the list because you
-                                  # cannot run a binary without linking!
+                            break
+                    else:
+                        self.code_out = out
 
                 # Log
                 if err is not None and err.strip() != '':
