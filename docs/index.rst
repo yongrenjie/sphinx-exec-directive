@@ -21,6 +21,7 @@ Contents
    basic
    options
    language/index
+   reference
 
 * :ref:`genindex`
 * :ref:`search`

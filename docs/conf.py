@@ -2,7 +2,10 @@ project = 'sphinx-exec-directive'
 copyright = '2022–2023, Jonathan Yong'
 author = 'Jonathan Yong & contributors'
 
-extensions = ['sphinx_exec_directive', 'sphinx.ext.autosectionlabel']
+extensions = ['sphinx_exec_directive',
+              'sphinx.ext.autosectionlabel',
+              'sphinx.ext.autodoc',
+              'numpydoc']
 root_doc = 'index'
 exclude_patterns = []
 

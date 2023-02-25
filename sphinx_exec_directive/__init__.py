@@ -42,7 +42,7 @@ class Exec(Directive):
         save_context = self.options.get('context', False)
         language = self.options.get('language', 'python')
         project_dir = self.options.get('project_dir', '')
-        opt_with = self.options.get('with', '')
+        opt_with = self.options.get('with', None)
         args = self.options.get ('args','').split()
         intertext = self.options.get('intertext', None)
 
