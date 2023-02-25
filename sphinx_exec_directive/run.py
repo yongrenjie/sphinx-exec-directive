@@ -121,6 +121,38 @@ class Runner:
             raise ValueError(make_error_message(self.executable,
                                                 self.language))
 
+    def execute_code_cpp(self):
+        if self.executable is None:
+            self.executable = 'g++'
+
+        if self.executable in ['g++', 'clang++']:
+            with NamedTemporaryFile(suffix='.cpp') as tempfile:
+                tempfile.write(self.code_in.encode('utf-8'))
+                tempfile.flush()
+                filepath = Path(tempfile.name)
+                compile_cmd = [self.executable, *self.args, tempfile.name]
+                with cd(filepath.parent):
+                    _ = subprocess.run(compile_cmd, check=True)
+                    proc = subprocess.run(['./a.out'], capture_output=True,
+                                          text=True)
+                    out = proc.stdout
+                    err = proc.stderr
+                log_stderr(err)
+                self.code_out = out
+
+        elif self.executable == 'make':
+            if self.project_dir is None:
+                raise ValueError(":project_dir: option is needed for"
+                                 "  Makefiles.")
+            out, _ = using_cmd(cmd=self.executable,
+                               args=self.args,
+                               dir=self.project_dir)
+            self.code_out = out
+
+        else:
+            raise ValueError(make_error_message(self.executable,
+                                                self.language))
+
     def execute_code_haskell(self):
         # Default Haskell runner is runghc.
         if self.executable is None:

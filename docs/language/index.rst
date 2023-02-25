@@ -18,6 +18,10 @@ For more information, follow the links for the respective languages below.
      - ``gcc`` or ``clang``
      - Creates a tempfile, then compiles and runs the code. Alternatively, use a Makefile.
 
+   * - :doc:`cpp <cpp>`
+     - ``g++`` or ``clang++``
+     - Creates a tempfile, then compiles and runs the code. Alternatively, use a Makefile.
+
    * - :doc:`haskell <haskell>`
      - ``runghc``, ``ghci``, ``cabal``, or ``stack``
      - Pipes the code into ``runghc`` or ``ghci``, or calls a ``cabal`` or ``stack`` target and captures stdout
@@ -39,6 +43,7 @@ For more information, follow the links for the respective languages below.
    :hidden:
 
    c
+   cpp
    haskell
    matlab
    shell
