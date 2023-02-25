@@ -76,10 +76,18 @@ class Runner:
         func()
     
     def execute_code_python(self):
-        output_object = io.StringIO()
-        with redirect_stdout(output_object):
-            exec(self.code_in, self.context)
-        self.code_out = output_object.getvalue()
+        if self.executable is None:
+            self.executable = 'exec'
+
+        if self.executable == 'exec':
+            output_object = io.StringIO()
+            with redirect_stdout(output_object):
+                exec(self.code_in, self.context)
+            self.code_out = output_object.getvalue()
+
+        else:
+            raise ValueError(make_error_message(self.executable,
+                                                self.language))
 
     def execute_code_c(self):
         if self.executable is None:
@@ -90,7 +98,7 @@ class Runner:
                 tempfile.write(self.code_in.encode('utf-8'))
                 tempfile.flush()
                 filepath = Path(tempfile.name)
-                compile_cmd = ['gcc', *self.args, tempfile.name]
+                compile_cmd = [self.executable, *self.args, tempfile.name]
                 with cd(filepath.parent):
                     _ = subprocess.run(compile_cmd, check=True)
                     proc = subprocess.run(['./a.out'], capture_output=True,
@@ -109,6 +117,10 @@ class Runner:
                                dir=self.project_dir)
             self.code_out = out
 
+        else:
+            raise ValueError(make_error_message(self.executable,
+                                                self.language))
+
     def execute_code_haskell(self):
         # Default Haskell runner is runghc.
         if self.executable is None:
@@ -119,7 +131,7 @@ class Runner:
                                 cmd='runghc')
             self.code_out = out
 
-        if self.executable == 'ghci':
+        elif self.executable == 'ghci':
             out, _ = using_pipe(code=self.code_in,
                                 cmd='ghci',
                                 args=['-ignore-dot-ghci'])
@@ -128,7 +140,7 @@ class Runner:
             out = out.replace("Leaving GHCi.\n", "")
             self.code_out = out
 
-        if self.executable in ['cabal', 'stack']:
+        elif self.executable in ['cabal', 'stack']:
             if self.project_dir is None:
                 raise ValueError(":project_dir: option is needed for"
                                  "  Cabal or Stack backends.")
@@ -147,6 +159,10 @@ class Runner:
                     break
             else:
                 self.code_out = out
+
+        else:
+            raise ValueError(make_error_message(self.executable,
+                                                self.language))
 
     def execute_code_matlab(self):
         with NamedTemporaryFile(suffix='.m') as tempfile:
@@ -232,3 +248,8 @@ def log_stderr(err):
     # TODO: Use Sphinx logging
     if err is not None and len(err.strip()) > 0:
         print(err)
+
+
+def make_error_message(exec, lang):
+    return (f"The executable '{exec}' is not recognised for the language"
+            f" '{lang}'.")
