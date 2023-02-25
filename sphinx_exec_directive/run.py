@@ -81,6 +81,34 @@ class Runner:
             exec(self.code_in, self.context)
         self.code_out = output_object.getvalue()
 
+    def execute_code_c(self):
+        if self.executable is None:
+            self.executable = 'gcc'
+
+        if self.executable in ['gcc', 'clang']:
+            with NamedTemporaryFile(suffix='.c') as tempfile:
+                tempfile.write(self.code_in.encode('utf-8'))
+                tempfile.flush()
+                filepath = Path(tempfile.name)
+                compile_cmd = ['gcc', *self.args, tempfile.name]
+                with cd(filepath.parent):
+                    _ = subprocess.run(compile_cmd, check=True)
+                    proc = subprocess.run(['./a.out'], capture_output=True,
+                                          text=True)
+                    out = proc.stdout
+                    err = proc.stderr
+                log_stderr(err)
+                self.code_out = out
+
+        elif self.executable == 'make':
+            if self.project_dir is None:
+                raise ValueError(":project_dir: option is needed for"
+                                 "  Makefiles.")
+            out, _ = using_cmd(cmd=self.executable,
+                               args=self.args,
+                               dir=self.project_dir)
+            self.code_out = out
+
     def execute_code_haskell(self):
         # Default Haskell runner is runghc.
         if self.executable is None:
@@ -121,11 +149,17 @@ class Runner:
                 self.code_out = out
 
     def execute_code_matlab(self):
-        out, _ = using_tmpfile(code=self.code_in,
-                               cmd='matlab',
-                               args=['-batch', '%stem%'],
-                               suffix='.m')
-        self.code_out = out
+        with NamedTemporaryFile(suffix='.m') as tempfile:
+            tempfile.write(self.code_in.encode('utf-8'))
+            tempfile.flush()
+            filepath = Path(tempfile.name)
+            cmd = ['matlab', '-batch', filepath.stem]
+            with cd(filepath.parent):
+                proc = subprocess.run(cmd, capture_output=True, text=True)
+                out = proc.stdout
+                err = proc.stderr
+            log_stderr(err)
+            self.code_out = out
 
     def execute_code_shell(self):
         out, _ = using_pipe(code=self.code_in, cmd='sh')
@@ -158,52 +192,6 @@ def using_pipe(code, cmd, args=None):
     out = proc.stdout
     err = proc.stderr
 
-    log_stderr(err)
-    return out, err
-
-
-def using_tmpfile(code, cmd, args=None, suffix=None):
-    """
-    Execute code using a temporary file.
-
-    Parameters
-    ----------
-    code : string
-        The code to be run.
-    cmd : string
-        The executable to be used.
-    args : list of string, optional
-        Extra command-line arguments to be passed. Special strings are
-        permitted:
-        "%stem%" expands to the name of the temporary file
-        without its suffix.
-        "%dir%" expands to the name of the directory the
-        temporary file is in.
-    suffix : string, optional
-        Suffix to use for the temporary file, if any.
-
-    Returns
-    -------
-    out : string
-        Standard output.
-    err : string
-        Standard error.
-    """
-    # Dump code to a temporary file.
-    with NamedTemporaryFile(suffix=suffix) as tempfile:
-        tempfile.write(code.encode('utf-8'))
-        tempfile.flush()   # mandatory, or else it will be empty
-        filepath = Path(tempfile.name)
-
-        # Construct the command to be run.
-        cmd = [cmd] + (args if args is not None else [])
-        cmd = [filepath.stem if x == "%stem%" else x for x in cmd]
-        cmd = [filepath.parent if x == "%dir%" else x for x in cmd]
-
-        with cd(filepath.parent):
-            proc = subprocess.run(cmd, capture_output=True, text=True)
-            out = proc.stdout
-            err = proc.stderr
     log_stderr(err)
     return out, err
 
