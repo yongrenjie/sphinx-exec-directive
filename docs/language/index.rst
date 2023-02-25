@@ -30,6 +30,10 @@ For more information, follow the links for the respective languages below.
      - ``matlab``
      - Creates a tempfile and runs non-interactive Matlab on it
 
+   * - :doc:`ocaml <ocaml>`
+     - ``ocaml`` or ``dune``
+     - Run a script directly (possibly via the toplevel), or run a ``dune`` target
+
    * - :doc:`shell <shell>`
      - ``sh``
      - Pipes the code into ``sh``; note that the initial working directory will be your home directory
@@ -46,4 +50,5 @@ For more information, follow the links for the respective languages below.
    cpp
    haskell
    matlab
+   ocaml
    shell

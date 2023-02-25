@@ -70,7 +70,7 @@ class Runner:
 
     def execute_code(self):
         try:
-            func = getattr(self, f"execute_code_{self.language}")
+            func = getattr(self, f'execute_code_{self.language}')
         except AttributeError:
             raise ValueError(f'Language {self.language} is not supported.')
         func()
@@ -110,8 +110,8 @@ class Runner:
 
         elif self.executable == 'make':
             if self.project_dir is None:
-                raise ValueError(":project_dir: option is needed for"
-                                 "  Makefiles.")
+                raise ValueError(':project_dir: option is needed for'
+                                 '  Makefiles.')
             out, _ = using_cmd(cmd=self.executable,
                                args=self.args,
                                dir=self.project_dir)
@@ -142,8 +142,8 @@ class Runner:
 
         elif self.executable == 'make':
             if self.project_dir is None:
-                raise ValueError(":project_dir: option is needed for"
-                                 "  Makefiles.")
+                raise ValueError(':project_dir: option is needed for'
+                                 '  Makefiles.')
             out, _ = using_cmd(cmd=self.executable,
                                args=self.args,
                                dir=self.project_dir)
@@ -167,15 +167,15 @@ class Runner:
             out, _ = using_pipe(code=self.code_in,
                                 cmd='ghci',
                                 args=['-ignore-dot-ghci'])
-            out = out.replace("ghci>", "")
-            out = re.sub("^.*?\n", "", out)
-            out = out.replace("Leaving GHCi.\n", "")
+            out = out.replace('ghci>', '')
+            out = re.sub('^.*?\n', '', out)
+            out = out.replace('Leaving GHCi.\n', '')
             self.code_out = out
 
         elif self.executable in ['cabal', 'stack']:
             if self.project_dir is None:
-                raise ValueError(":project_dir: option is needed for"
-                                 "  Cabal or Stack backends.")
+                raise ValueError(':project_dir: option is needed for'
+                                 '  Cabal or Stack backends.')
 
             out, _ = using_cmd(cmd=self.executable,
                                args=self.args,
@@ -185,7 +185,7 @@ class Runner:
                 # Markers for the last line of build output. Anything
                 # following this is the actual output produced by the
                 # programme.
-                if "Linking" in line or line == "Up to date":
+                if 'Linking' in line or line == 'Up to date':
                     i = index + 1
                     self.code_out = '\n'.join(out_stream[i:])
                     break
@@ -208,6 +208,52 @@ class Runner:
                 err = proc.stderr
             log_stderr(err)
             self.code_out = out
+
+    def execute_code_ocaml(self):
+        if self.executable is None:
+            self.executable = 'ocaml'
+
+        if self.executable == 'ocaml':
+            with NamedTemporaryFile(suffix='.ml') as tempfile:
+                tempfile.write(self.code_in.encode('utf-8'))
+                tempfile.flush()
+                filepath = Path(tempfile.name)
+                with cd(filepath.parent):
+                    proc = subprocess.run(['ocaml', tempfile.name],
+                                          capture_output=True, text=True)
+                    out = proc.stdout
+                    err = proc.stderr
+                log_stderr(err)
+                self.code_out = out
+
+        elif self.executable == 'utop':
+            out, _ = using_pipe(code=self.code_in, cmd='utop')
+            self.code_out = out
+
+        elif self.executable == 'dune':
+            if self.project_dir is None:
+                raise ValueError(':project_dir: option is needed for'
+                                 '  Dune backend.')
+
+            out, _ = using_cmd(cmd=self.executable,
+                               args=self.args,
+                               dir=self.project_dir)
+            self.code_out = out
+            # out_stream = out.splitlines()
+            # for index, line in enumerate(out_stream):
+            #     # Markers for the last line of build output. Anything
+            #     # following this is the actual output produced by the
+            #     # programme.
+            #     if 'Linking' in line or line == 'Up to date':
+            #         i = index + 1
+            #         self.code_out = '\n'.join(out_stream[i:])
+            #         break
+            # else:
+            #     self.code_out = out
+
+        else:
+            raise ValueError(make_error_message(self.executable,
+                                                self.language))
 
     def execute_code_shell(self):
         out, _ = using_pipe(code=self.code_in, cmd='sh')

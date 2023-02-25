@@ -10,3 +10,4 @@ tests/rst_source/dirhtml
 
 docs/_build
 docs/examples/hellocabal/dist-newstyle
+docs/examples/hellodune/_build
