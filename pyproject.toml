@@ -17,7 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "tox",
+    "nox",
     "sphinx-autobuild",
     "numpydoc"
 ]

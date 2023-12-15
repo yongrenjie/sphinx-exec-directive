@@ -1,5 +1,6 @@
 import importlib
-version = importlib.metadata.version('sphinx-exec-directive')
+
+version = importlib.metadata.version("sphinx-exec-directive")
 
 project = "sphinx-exec-directive"
 copyright = "2022–2023, Jonathan Yong"
