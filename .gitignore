@@ -7,6 +7,7 @@ build/
 dist/
 .tox
 tests/rst_source/dirhtml
+venv*/
 
 docs/_build
 docs/examples/hellocabal/dist-newstyle

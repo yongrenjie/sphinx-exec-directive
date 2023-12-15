@@ -5,5 +5,8 @@ Technically, you can ``import sphinx_exec_directive`` in a script and use the fu
 However, **this interface is unstable**: the public interface of this package is defined by its usage in Sphinx documents, not by the functions it provides.
 
 
-.. automodule:: sphinx_exec_directive.run
+.. automodule:: sphinx_exec_directive.runner
+   :members:
+
+.. automodule:: sphinx_exec_directive.language
    :members:

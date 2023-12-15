@@ -21,17 +21,27 @@ def test_sphinx_build(tmp_path):
     This will use either `open` or `xdg-open` to open the built HTML pages so
     that they can be inspected for correctness.
     """
-    source_dir = tmp_path / 'rst_source'
-    shutil.copytree(Path(__file__).parent / 'rst_source', source_dir)
-    build_dir = tmp_path / 'build_html'
+    source_dir = tmp_path / "rst_source"
+    shutil.copytree(Path(__file__).parent / "rst_source", source_dir)
+    build_dir = tmp_path / "build_html"
 
-    cmd = [sys.executable, '-m', 'sphinx', '-W', '-E', '-b', 'html',
-           str(source_dir), str(build_dir)]
+    cmd = [
+        sys.executable,
+        "-m",
+        "sphinx",
+        "-W",
+        "-E",
+        "-b",
+        "html",
+        str(source_dir),
+        str(build_dir),
+    ]
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     out, err = proc.communicate()
 
-    assert proc.returncode == 0, \
-        f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
+    assert (
+        proc.returncode == 0
+    ), f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
     if err:
         pytest.fail(f"sphinx build emitted the following warnings:\n{err}")
 
@@ -44,6 +54,5 @@ def test_sphinx_build(tmp_path):
             Popen(["xdg-open", f"{str(build_dir)}/index.html"])
         else:
             warnings.warn("unsupported operating system for opening html")
-
 
     assert build_dir.is_dir()
