@@ -19,7 +19,8 @@ dependencies = [
 dev = [
     "nox",
     "sphinx-autobuild",
-    "numpydoc"
+    "numpydoc",
+    "pytest"
 ]
 
 [build-system]

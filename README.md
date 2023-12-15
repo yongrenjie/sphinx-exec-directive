@@ -40,3 +40,18 @@ Place the above into your RST file and Sphinx will generate two literal blocks w
 
 For further details and usage examples, please see the [documentation](https://yongrenjie.github.io/sphinx-exec-directive).
 It contains quite a few exec directives, so you get to see some in the wild!
+
+## Developing
+
+You'll want to create a virtual environment and install the dev dependencies:
+
+```
+git clone git@github.com:yongrenjie/sphinx-exec-directive.git
+cd sphinx-exec-directive
+python -m venv venv
+pip install -e .[dev]
+```
+
+- `nox`: run tests
+- `nox -s black`: run `black` on the entire project:
+- `cd docs; make`: build docs
